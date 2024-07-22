@@ -1,41 +1,51 @@
 import express from "express";
+import axios from "axios";
+import { URLSearchParams } from "url";
 
-import { authenticate, upload, validateBody } from "../helpers/index.js";
-import {
-  registerSchema,
-  loginSchema,
-  updateUserSchema,
-  updateThemeSchema,
-} from "../schemas/userSchema.js";
-import authControllers from "../controllers/authControllers.js";
+const router = express.Router();
 
-const authRouter = express.Router();
+router.get("/auth", (req, res) => {
+  const authUrl =
+    `https://verify-sandbox.gocardless.com/oauth/authorize?` +
+    `client_id=${process.env.GC_CLIENT_ID}&` +
+    `redirect_uri=${process.env.GC_REDIRECT_URI}&` +
+    `scope=read_write&` +
+    `response_type=code`;
+  res.redirect(authUrl); // Додано перенаправлення на authUrl
+});
 
-authRouter.post(
-  "/register",
-  validateBody(registerSchema),
-  authControllers.register
-);
+router.get("/callback", async (req, res) => {
+  const { code } = req.query;
 
-authRouter.post("/login", validateBody(loginSchema), authControllers.login);
+  try {
+    const response = await axios.post(
+      `${process.env.GC_API_URL}/oauth/token`,
+      new URLSearchParams({
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: process.env.GC_REDIRECT_URI,
+        client_id: process.env.GC_CLIENT_ID,
+        client_secret: process.env.GC_CLIENT_SECRET,
+      }).toString(),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-authRouter.get("/current", authenticate, authControllers.getCurrent);
+    const { access_token } = response.data;
 
-authRouter.post("/logout", authenticate, authControllers.logout);
+    console.log("Access Token:", access_token);
 
-authRouter.put(
-  "/update",
-  authenticate,
-  upload.single("avatarURL"),
-  validateBody(updateUserSchema),
-  authControllers.updateUser
-);
+    // Оновіть вашу конфігурацію GoCardless (можливо, збережіть у базі даних)
+    process.env.GC_ACCESS_TOKEN = access_token;
 
-authRouter.patch(
-  "/theme",
-  authenticate,
-  validateBody(updateThemeSchema),
-  authControllers.updateUserTheme
-);
-authRouter.post("/support", authenticate, authControllers.getHelpEmail);
-export default authRouter;
+    res.redirect("/onboarding-complete"); // Направлення після завершення авторизації
+  } catch (error) {
+    console.error("Error exchanging code for token:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+export default router;

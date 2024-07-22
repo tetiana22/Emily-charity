@@ -1,5 +1,4 @@
 import HttpError from "./HttpError.js";
-import Joi from "joi";
 
 const validateBody = (schema) => {
   const func = (req, _, next) => {

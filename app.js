@@ -1,31 +1,36 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
-import swaggerUi from "swagger-ui-express";
-import fs from "fs";
-
+import GoCardless from "gocardless-nodejs";
+import paymentRouter from "./routes/paymentRouter.js";
+import dotenv from "dotenv";
 import authRouter from "./routes/authRouter.js";
-import boardsRouter from "./routes/boardsRouter.js";
-import columnsRouter from "./routes/columnsRouter.js";
-import cardsRouter from "./routes/cardsRouter.js";
+import webhookRouter from "./routes/webhookRoute.js";
+import bodyParser from "body-parser";
+
+dotenv.config();
 
 const app = express();
 
 app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.raw({ type: "application/json", limit: "10mb" }));
+
+const gcEnvironment = process.env.GC_API_URL.includes("sandbox")
+  ? "sandbox"
+  : "live";
+
+// Ініціалізація GoCardless
+const gc = new GoCardless({
+  access_token: process.env.GC_ACCESS_TOKEN || "placeholder_access_token",
+  environment: gcEnvironment,
+});
 
 // Routers
-app.use("/users", authRouter);
-app.use("/boards", boardsRouter);
-app.use("/columns", columnsRouter);
-app.use("/cards", cardsRouter);
-
-// Read Swagger JSON file synchronously
-const swaggerDocs = JSON.parse(fs.readFileSync("./swagger.json", "utf-8"));
-
-// Serve Swagger documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use("/payment", paymentRouter);
+app.use("/web", webhookRouter);
+app.use("/aut", authRouter);
 
 // Handle 404 errors
 app.use((req, res) => {
@@ -39,3 +44,4 @@ app.use((err, req, res, next) => {
 });
 
 export default app;
+export { gc };

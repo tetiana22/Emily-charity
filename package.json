@@ -1,7 +1,7 @@
 {
-  "name": "taskpro-backend",
+  "name": "emily-charity-backend",
   "version": "1.0.0",
-  "description": "goit group 8 final backend project",
+  "description": "charity project",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -10,31 +10,26 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tetiana22/taskpro-backend/"
+    "url": "https://github.com/tetiana22/Emily-charity/"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/tetiana22/taskpro-backend/issues"
+    "url": "https://github.com/tetiana22/Emily-charity/issues"
   },
-  "homepage": "https://github.com/tetiana22/taskpro-backend#readme",
+  "homepage": "https://github.com/tetiana22/Emily-charity#readme",
   "devDependencies": {
     "nodemon": "^3.1.0"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^2.4.3",
-    "cloudinary": "^2.2.0",
+    "axios": "^1.7.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "joi": "^17.13.1",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.4.1",
-    "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
-    "multer-storage-cloudinary": "^4.0.0",
-    "node-mailer": "^0.1.1",
-    "swagger-ui-express": "^5.0.0"
+    "gocardless-nodejs": "^3.26.0",
+    "joi": "^17.13.3",
+    "mongodb": "^6.8.0",
+    "mongoose": "^8.5.1",
+    "morgan": "^1.10.0"
   }
 }
