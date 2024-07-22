@@ -1,13 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { gc } from "../app.js"; // виправлено шлях імпорту
+import { gc } from "../app.js";
 
 const createCustomer = async (req, res) => {
   try {
     const customer = await gc.customers.create({
-      given_name: req.body.given_name, // виправлено ім'я поля з name на given_name
-      family_name: req.body.family_name, // виправлено ім'я поля з surname на family_name
+      given_name: req.body.given_name,
+      family_name: req.body.family_name,
       email: req.body.email,
       address_line1: req.body.address_line1,
       city: req.body.city,
@@ -44,4 +44,27 @@ const createPayment = async (req, res) => {
   }
 };
 
-export default { createCustomer, createPayment };
+const createCheckout = async (req, res) => {
+  const { amount } = req.body;
+
+  try {
+    const checkout = await gc.checkoutFlows.create({
+      description: "Charity Donation",
+      amount: amount * 100, // GoCardless expects amount in pence
+      currency: "GBP",
+      redirect_uri: process.env.REDIRECT_URI,
+      prefill_customer: {
+        given_name: "John",
+        family_name: "Doe",
+        email: "john.doe@example.com",
+      },
+    });
+
+    res.json({ checkout_url: checkout.redirect_url });
+  } catch (error) {
+    console.error("Error creating checkout:", error);
+    res.status(500).send("Error creating checkout");
+  }
+};
+
+export default { createCustomer, createPayment, createCheckout };

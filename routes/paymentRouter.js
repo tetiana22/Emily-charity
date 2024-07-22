@@ -17,4 +17,6 @@ paymentRouter.post(
   paymentControllers.createPayment
 );
 
+paymentRouter.post("/create-checkout", paymentControllers.createCheckout);
+
 export default paymentRouter;
