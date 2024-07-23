@@ -1,12 +1,10 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import bodyParser from "body-parser";
 import GoCardless from "gocardless-nodejs";
 import paymentRouter from "./routes/paymentRouter.js";
 import dotenv from "dotenv";
-import authRouter from "./routes/authRouter.js";
-import webhookRouter from "./routes/webhookRoute.js";
-import bodyParser from "body-parser";
 
 dotenv.config();
 
@@ -29,8 +27,6 @@ const gc = new GoCardless({
 
 // Routers
 app.use("/payment", paymentRouter);
-app.use("/web", webhookRouter);
-app.use("/aut", authRouter);
 
 // Handle 404 errors
 app.use((req, res) => {
