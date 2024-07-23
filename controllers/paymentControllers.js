@@ -9,9 +9,9 @@ const createCheckout = async (req, res) => {
   try {
     const checkout = await gc.checkoutFlows.create({
       description: "Charity Donation",
-      amount: amount * 100,
+      amount: amount * 100, // Сума в пенсах
       currency: "GBP",
-      redirect_uri: process.env.REDIRECT_URI,
+      redirect_uri: process.env.GC_REDIRECT_URI, // URL перенаправлення після успішного платежу
     });
 
     res.json({ checkout_url: checkout.redirect_url });
