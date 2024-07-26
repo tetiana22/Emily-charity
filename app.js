@@ -54,13 +54,12 @@ app.post("/create-billing-request", async (req, res) => {
       `${GO_CARDLESS_API_URL}/billing_requests`,
       {
         billing_requests: {
-          mandate_request: {
-            scheme: "bacs",
-            currency: currency,
-            // amount in subunits, e.g., £10 should be 1000
-          },
           payment_request: {
             amount: amount * 100, // convert to subunits (cents)
+            currency: currency,
+          },
+          mandate_request: {
+            scheme: "bacs",
             currency: currency,
           },
           links: {
