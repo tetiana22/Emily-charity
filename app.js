@@ -1,9 +1,17 @@
 import express from "express";
 import bodyParser from "body-parser";
 import axios from "axios";
+import cors from "cors";
 
 const app = express();
 app.use(bodyParser.json());
+app.use(
+  cors({
+    origin: "https://emily-charity.onrender.com",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
 const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
