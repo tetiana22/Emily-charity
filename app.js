@@ -27,6 +27,13 @@ app.post("/create-billing-request", async (req, res) => {
       currency = "GBP",
     } = req.body;
 
+    // Переконайтеся, що amount є числом і помножте на 100 для переведення в субодиниці валюти
+    const amountInSubunits = Math.round(parseFloat(amount) * 100);
+
+    if (isNaN(amountInSubunits) || amountInSubunits <= 0) {
+      throw new Error("Invalid amount value");
+    }
+
     // Create Customer
     const customerResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/customers`,
@@ -55,7 +62,7 @@ app.post("/create-billing-request", async (req, res) => {
       {
         billing_requests: {
           payment_request: {
-            amount: amount * 100, // convert to subunits (cents)
+            amount: amountInSubunits, // використовуємо amountInSubunits
             currency: currency,
           },
           mandate_request: {
