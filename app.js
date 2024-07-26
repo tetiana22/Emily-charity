@@ -25,6 +25,7 @@ app.post("/create-billing-request", async (req, res) => {
       family_name,
       amount,
       currency = "GBP",
+      description = "Donation", // Додано поле description з дефолтним значенням
     } = req.body;
 
     // Переконайтеся, що amount є числом і помножте на 100 для переведення в субодиниці валюти
@@ -64,6 +65,7 @@ app.post("/create-billing-request", async (req, res) => {
           payment_request: {
             amount: amountInSubunits, // використовуємо amountInSubunits
             currency: currency,
+            description: description, // Додано поле description
           },
           mandate_request: {
             scheme: "bacs",
