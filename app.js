@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import axios from "axios";
 import cors from "cors";
+
 const app = express();
 app.use(bodyParser.json());
 app.use(
@@ -11,9 +12,11 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
 const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
 const GC_VERSION = "2015-07-06"; // Ensure the API version is up to date
+
 app.post("/create-billing-request", async (req, res) => {
   try {
     const {
@@ -23,6 +26,7 @@ app.post("/create-billing-request", async (req, res) => {
       amount,
       currency = "GBP",
     } = req.body;
+
     // Create Customer
     const customerResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/customers`,
@@ -31,7 +35,6 @@ app.post("/create-billing-request", async (req, res) => {
           email: email,
           given_name: given_name, // Directly using given_name
           family_name: family_name || "", // Directly using family_name
-          amount: amount,
           country_code: "GB",
         },
       },
@@ -43,7 +46,9 @@ app.post("/create-billing-request", async (req, res) => {
         },
       }
     );
+
     const customerId = customerResponse.data.customers.id;
+
     // Create Billing Request
     const billingRequestResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/billing_requests`,
@@ -52,7 +57,11 @@ app.post("/create-billing-request", async (req, res) => {
           mandate_request: {
             scheme: "bacs",
             currency: currency,
-            amount: amount, // Add amount to billing request
+            // amount in subunits, e.g., £10 should be 1000
+          },
+          payment_request: {
+            amount: amount * 100, // convert to subunits (cents)
+            currency: currency,
           },
           links: {
             customer: customerId,
@@ -67,6 +76,7 @@ app.post("/create-billing-request", async (req, res) => {
         },
       }
     );
+
     res.status(201).json(billingRequestResponse.data);
   } catch (error) {
     console.error(
@@ -78,10 +88,12 @@ app.post("/create-billing-request", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
+
 // Additional endpoint for creating Billing Request Flow
 app.post("/create-billing-request-flow", async (req, res) => {
   try {
     const { billingRequestId } = req.body;
+
     // Create Billing Request Flow
     const billingRequestFlowResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/billing_request_flows`,
@@ -102,6 +114,7 @@ app.post("/create-billing-request-flow", async (req, res) => {
         },
       }
     );
+
     res.status(201).json(billingRequestFlowResponse.data);
   } catch (error) {
     console.error(
@@ -113,4 +126,5 @@ app.post("/create-billing-request-flow", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
+
 export default app;
