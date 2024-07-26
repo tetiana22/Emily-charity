@@ -1,43 +1,111 @@
 import express from "express";
-import morgan from "morgan";
-import cors from "cors";
 import bodyParser from "body-parser";
-import GoCardless from "gocardless-nodejs";
-import paymentRouter from "./routes/paymentRouter.js";
-import dotenv from "dotenv";
-
-dotenv.config();
+import axios from "axios";
 
 const app = express();
+app.use(bodyParser.json());
 
-app.use(morgan("tiny"));
-app.use(cors());
-app.use(express.json());
-app.use(bodyParser.raw({ type: "application/json", limit: "10mb" }));
+const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
+const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
+const GC_VERSION = "2015-07-06"; // Ensure the API version is up to date
 
-const gcEnvironment = process.env.GC_API_URL.includes("sandbox")
-  ? "sandbox"
-  : "live";
+app.post("/create-billing-request", async (req, res) => {
+  try {
+    const { email, name, currency = "GBP" } = req.body;
 
-// Ініціалізація GoCardless
-const gc = new GoCardless({
-  access_token: process.env.GC_ACCESS_TOKEN || "placeholder_access_token",
-  environment: gcEnvironment,
+    // Create Customer
+    const customerResponse = await axios.post(
+      `${GO_CARDLESS_API_URL}/customers`,
+      {
+        customers: {
+          email: email,
+          given_name: name.split(" ")[0], // Extracting given name
+          family_name: name.split(" ")[1] || "", // Extracting family name
+          country_code: "GB",
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+          "GoCardless-Version": GC_VERSION,
+        },
+      }
+    );
+
+    const customerId = customerResponse.data.customers.id;
+
+    // Create Billing Request
+    const billingRequestResponse = await axios.post(
+      `${GO_CARDLESS_API_URL}/billing_requests`,
+      {
+        billing_requests: {
+          mandate_request: {
+            scheme: "bacs",
+            currency: currency,
+          },
+          links: {
+            customer: customerId,
+          },
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+          "GoCardless-Version": GC_VERSION,
+        },
+      }
+    );
+
+    res.status(201).json(billingRequestResponse.data);
+  } catch (error) {
+    console.error(
+      "Error creating billing request:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(error.response ? error.response.status : 500)
+      .json({ error: error.response ? error.response.data : error.message });
+  }
 });
 
-// Routers
-app.use("/payment", paymentRouter);
+// Additional endpoint for creating Billing Request Flow
+app.post("/create-billing-request-flow", async (req, res) => {
+  try {
+    const { billingRequestId } = req.body;
 
-// Handle 404 errors
-app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
+    // Create Billing Request Flow
+    const billingRequestFlowResponse = await axios.post(
+      `${GO_CARDLESS_API_URL}/billing_request_flows`,
+      {
+        billing_request_flows: {
+          redirect_uri: "https://my-company.com/landing",
+          exit_uri: "https://my-company.com/exit",
+          links: {
+            billing_request: billingRequestId,
+          },
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+          "GoCardless-Version": GC_VERSION,
+        },
+      }
+    );
 
-// Error handler middleware
-app.use((err, req, res, next) => {
-  const { status = 500, message = "Server error" } = err;
-  res.status(status).json({ message });
+    res.status(201).json(billingRequestFlowResponse.data);
+  } catch (error) {
+    console.error(
+      "Error creating billing request flow:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(error.response ? error.response.status : 500)
+      .json({ error: error.response ? error.response.data : error.message });
+  }
 });
 
 export default app;
-export { gc };
