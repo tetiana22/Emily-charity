@@ -17,7 +17,7 @@ const PAYPAL_CLIENT_ID =
   "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
 const PAYPAL_CLIENT_SECRET =
   "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
-const PAYPAL_API_URL = "https://sandbox.paypal.com";
+const PAYPAL_API_URL = "https://api-m.sandbox.paypal.com/v1/oauth2/token";
 
 const generatePayPalToken = async (req, res, next) => {
   try {
@@ -206,8 +206,8 @@ app.post("/create-billing-request-flow", async (req, res) => {
       `${GO_CARDLESS_API_URL}/billing_request_flows`,
       {
         billing_request_flows: {
-          redirect_uri: "https://my-company.com/landing",
-          exit_uri: "https://my-company.com/exit",
+          redirect_uri: "https://www.emily_charity.com/callback",
+          exit_uri: "https://www.emily_charity.com/exit",
           links: {
             billing_request: billingRequestId,
           },
