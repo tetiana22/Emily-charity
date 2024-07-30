@@ -12,9 +12,118 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+const PAYPAL_CLIENT_ID =
+  "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
+const PAYPAL_CLIENT_SECRET =
+  "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
+const PAYPAL_API_URL = "https://sandbox.paypal.com";
+
+const generatePayPalToken = async (req, res, next) => {
+  try {
+    const auth = Buffer.from(
+      `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+    ).toString("base64");
+
+    const response = await axios({
+      url: `${PAYPAL_API_URL}/v1/oauth2/token`,
+      method: "post",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${auth}`,
+      },
+      data: "grant_type=client_credentials",
+    });
+
+    req.paypalToken = response.data.access_token;
+    next();
+  } catch (error) {
+    console.error(
+      "Error generating PayPal token:",
+      error.response ? error.response.data : error.message
+    );
+    res.status(500).json({ error: "Error generating PayPal token" });
+  }
+};
+
+app.post("/create-payment", generatePayPalToken, async (req, res) => {
+  const { amount } = req.body;
+
+  try {
+    const paymentData = {
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: "USD",
+            value: amount,
+          },
+        },
+      ],
+      application_context: {
+        brand_name: "Your Brand",
+        landing_page: "NO_PREFERENCE",
+        user_action: "PAY_NOW",
+        return_url: "http://localhost:3000/success",
+        cancel_url: "http://localhost:3000/cancel",
+      },
+    };
+
+    const response = await axios.post(
+      `${PAYPAL_API_URL}/v2/checkout/orders`,
+      paymentData,
+      {
+        headers: {
+          Authorization: `Bearer ${req.paypalToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    console.error(
+      "Error creating PayPal payment:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(error.response ? error.response.status : 500)
+      .json({ error: error.response ? error.response.data : error.message });
+  }
+});
+
+app.post("/execute-payment", generatePayPalToken, async (req, res) => {
+  const { paymentID, payerID } = req.body;
+
+  try {
+    const response = await axios.post(
+      `${PAYPAL_API_URL}/v2/checkout/orders/${paymentID}/capture`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${req.paypalToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error(
+      "Error executing PayPal payment:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(error.response ? error.response.status : 500)
+      .json({ error: error.response ? error.response.data : error.message });
+  }
+});
+
+// GoCardless Integration (left unchanged)
 const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
 const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
 const GC_VERSION = "2015-07-06"; // Ensure the API version is up to date
+
 app.post("/create-billing-request", async (req, res) => {
   try {
     const {
@@ -26,12 +135,11 @@ app.post("/create-billing-request", async (req, res) => {
       description = "Donation", // Додано поле description з дефолтним значенням
     } = req.body;
 
-    // Переконайтеся, що amount є числом і помножте на 100 для переведення в субодиниці валюти
     const amountInSubunits = Math.round(parseFloat(amount) * 100);
     if (isNaN(amountInSubunits) || amountInSubunits <= 0) {
       throw new Error("Invalid amount value");
     }
-    // Create Customer
+
     const customerResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/customers`,
       {
@@ -51,7 +159,7 @@ app.post("/create-billing-request", async (req, res) => {
       }
     );
     const customerId = customerResponse.data.customers.id;
-    // Create Billing Request
+
     const billingRequestResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/billing_requests`,
       {
@@ -89,11 +197,11 @@ app.post("/create-billing-request", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
-// Additional endpoint for creating Billing Request Flow
+
 app.post("/create-billing-request-flow", async (req, res) => {
   try {
     const { billingRequestId } = req.body;
-    // Create Billing Request Flow
+
     const billingRequestFlowResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/billing_request_flows`,
       {
