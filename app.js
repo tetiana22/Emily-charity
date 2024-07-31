@@ -34,6 +34,55 @@ async function getPayPalAccessToken() {
   );
   return response.data.access_token;
 }
+// app.post("/create-paypal-order", async (req, res) => {
+//   try {
+//     const { amount, currency = "USD" } = req.body;
+
+//     console.log("Received amount:", amount); // Логування значення amount
+
+//     // Перевірка формату значення amount
+//     const amountValue = parseFloat(amount.value);
+//     if (isNaN(amountValue) || amountValue <= 0) {
+//       return res.status(400).json({ error: "Invalid amount value" });
+//     }
+
+//     const formattedAmount = amountValue.toFixed(2);
+
+//     const accessToken = await getPayPalAccessToken();
+
+//     const orderResponse = await axios.post(
+//       `${PAYPAL_API_URL}/v2/checkout/orders`,
+//       {
+//         intent: "CAPTURE",
+//         purchase_units: [
+//           {
+//             amount: {
+//               currency_code: currency,
+//               value: formattedAmount,
+//             },
+//           },
+//         ],
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     res.status(201).json(orderResponse.data);
+//   } catch (error) {
+//     console.error(
+//       "Error creating PayPal order:",
+//       error.response ? error.response.data : error.message
+//     );
+//     res
+//       .status(error.response ? error.response.status : 500)
+//       .json({ error: error.response ? error.response.data : error.message });
+//   }
+// });
+
 app.post("/create-paypal-order", async (req, res) => {
   try {
     const { amount, currency = "USD" } = req.body;
@@ -41,7 +90,7 @@ app.post("/create-paypal-order", async (req, res) => {
     console.log("Received amount:", amount); // Логування значення amount
 
     // Перевірка формату значення amount
-    const amountValue = parseFloat(amount.value);
+    const amountValue = parseFloat(amount); // Без .value
     if (isNaN(amountValue) || amountValue <= 0) {
       return res.status(400).json({ error: "Invalid amount value" });
     }
@@ -82,6 +131,7 @@ app.post("/create-paypal-order", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
+
 // GoCardless Integration (left unchanged)
 const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
 const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
