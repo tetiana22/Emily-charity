@@ -34,71 +34,16 @@ async function getPayPalAccessToken() {
   );
   return response.data.access_token;
 }
-// app.post("/create-paypal-order", async (req, res) => {
-//   try {
-//     const { amount, currency = "USD" } = req.body;
-
-//     console.log("Received amount:", amount); // Логування значення amount
-
-//     // Перевірка формату значення amount
-//     const amountValue = parseFloat(amount.value);
-//     if (isNaN(amountValue) || amountValue <= 0) {
-//       return res.status(400).json({ error: "Invalid amount value" });
-//     }
-
-//     const formattedAmount = amountValue.toFixed(2);
-
-//     const accessToken = await getPayPalAccessToken();
-
-//     const orderResponse = await axios.post(
-//       `${PAYPAL_API_URL}/v2/checkout/orders`,
-//       {
-//         intent: "CAPTURE",
-//         purchase_units: [
-//           {
-//             amount: {
-//               currency_code: currency,
-//               value: formattedAmount,
-//             },
-//           },
-//         ],
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     res.status(201).json(orderResponse.data);
-//   } catch (error) {
-//     console.error(
-//       "Error creating PayPal order:",
-//       error.response ? error.response.data : error.message
-//     );
-//     res
-//       .status(error.response ? error.response.status : 500)
-//       .json({ error: error.response ? error.response.data : error.message });
-//   }
-// });
 
 app.post("/create-paypal-order", async (req, res) => {
   try {
     const { amount, currency = "USD" } = req.body;
-
-    console.log("Received amount:", amount); // Логування значення amount
-
-    // Перевірка формату значення amount
-    const amountValue = parseFloat(amount); // Без .value
+    const amountValue = parseFloat(amount);
     if (isNaN(amountValue) || amountValue <= 0) {
       return res.status(400).json({ error: "Invalid amount value" });
     }
-
     const formattedAmount = amountValue.toFixed(2);
-
     const accessToken = await getPayPalAccessToken();
-
     const orderResponse = await axios.post(
       `${PAYPAL_API_URL}/v2/checkout/orders`,
       {
@@ -119,7 +64,6 @@ app.post("/create-paypal-order", async (req, res) => {
         },
       }
     );
-
     res.status(201).json(orderResponse.data);
   } catch (error) {
     console.error(
@@ -132,119 +76,9 @@ app.post("/create-paypal-order", async (req, res) => {
   }
 });
 
-// GoCardless Integration (left unchanged)
 const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
 const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
-const GC_VERSION = "2015-07-06"; // Ensure the API version is up to date
-
-// app.post("/create-billing-request", async (req, res) => {
-//   try {
-//     const {
-//       email,
-//       given_name,
-//       family_name,
-//       amount,
-//       currency = "GBP",
-//       description = "Donation", // Додано поле description з дефолтним значенням
-//     } = req.body;
-
-//     const amountInSubunits = Math.round(parseFloat(amount) * 100);
-//     if (isNaN(amountInSubunits) || amountInSubunits <= 0) {
-//       throw new Error("Invalid amount value");
-//     }
-
-//     const customerResponse = await axios.post(
-//       `${GO_CARDLESS_API_URL}/customers`,
-//       {
-//         customers: {
-//           email: email,
-//           given_name: given_name, // Directly using given_name
-//           family_name: family_name || "", // Directly using family_name
-//           country_code: "GB",
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${ACCESS_TOKEN}`,
-//           "Content-Type": "application/json",
-//           "GoCardless-Version": GC_VERSION,
-//         },
-//       }
-//     );
-//     const customerId = customerResponse.data.customers.id;
-
-//     const billingRequestResponse = await axios.post(
-//       `${GO_CARDLESS_API_URL}/billing_requests`,
-//       {
-//         billing_requests: {
-//           payment_request: {
-//             amount: amountInSubunits, // використовуємо amountInSubunits
-//             currency: currency,
-//             description: description, // Додано поле description
-//           },
-//           mandate_request: {
-//             scheme: "bacs",
-//             currency: currency,
-//           },
-//           links: {
-//             customer: customerId,
-//           },
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${ACCESS_TOKEN}`,
-//           "Content-Type": "application/json",
-//           "GoCardless-Version": GC_VERSION,
-//         },
-//       }
-//     );
-//     res.status(201).json(billingRequestResponse.data);
-//   } catch (error) {
-//     console.error(
-//       "Error creating billing request:",
-//       error.response ? error.response.data : error.message
-//     );
-//     res
-//       .status(error.response ? error.response.status : 500)
-//       .json({ error: error.response ? error.response.data : error.message });
-//   }
-// });
-
-// app.post("/create-billing-request-flow", async (req, res) => {
-//   try {
-//     const { billingRequestId } = req.body;
-
-//     const billingRequestFlowResponse = await axios.post(
-//       `${GO_CARDLESS_API_URL}/billing_request_flows`,
-//       {
-//         billing_request_flows: {
-//           redirect_uri: "https://www.emily_charity.com/callback",
-//           exit_uri: "https://www.emily_charity.com/exit",
-//           links: {
-//             billing_request: billingRequestId,
-//           },
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${ACCESS_TOKEN}`,
-//           "Content-Type": "application/json",
-//           "GoCardless-Version": GC_VERSION,
-//         },
-//       }
-//     );
-//     res.status(201).json(billingRequestFlowResponse.data);
-//   } catch (error) {
-//     console.error(
-//       "Error creating billing request flow:",
-//       error.response ? error.response.data : error.message
-//     );
-//     res
-//       .status(error.response ? error.response.status : 500)
-//       .json({ error: error.response ? error.response.data : error.message });
-//   }
-// });
+const GC_VERSION = "2015-07-06";
 
 app.post("/create-billing-request", async (req, res) => {
   try {
@@ -254,14 +88,12 @@ app.post("/create-billing-request", async (req, res) => {
       family_name,
       amount,
       currency = "GBP",
-      description = "Donation", // Додано поле description з дефолтним значенням
+      description = "Donation",
     } = req.body;
-
     const amountInSubunits = Math.round(parseFloat(amount) * 100);
     if (isNaN(amountInSubunits) || amountInSubunits <= 0) {
       throw new Error("Invalid amount value");
     }
-
     const customerResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/customers`,
       {
@@ -281,7 +113,6 @@ app.post("/create-billing-request", async (req, res) => {
       }
     );
     const customerId = customerResponse.data.customers.id;
-
     const billingRequestResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/billing_requests`,
       {
@@ -308,10 +139,6 @@ app.post("/create-billing-request", async (req, res) => {
         },
       }
     );
-
-    // Log the full response to check the structure
-    console.log("Billing request response:", billingRequestResponse.data);
-
     res.status(201).json(billingRequestResponse.data);
   } catch (error) {
     console.error(
@@ -327,13 +154,11 @@ app.post("/create-billing-request", async (req, res) => {
 app.post("/create-billing-request-flow", async (req, res) => {
   try {
     const { billingRequestId } = req.body;
-
     const billingRequestFlowResponse = await axios.post(
       `${GO_CARDLESS_API_URL}/billing_request_flows`,
       {
         billing_request_flows: {
-          redirect_uri: "https://www.emily_charity.com/callback",
-          exit_uri: "https://www.emily_charity.com/exit",
+          redirect_uri: "https://your-redirect-uri.com",
           links: {
             billing_request: billingRequestId,
           },
@@ -347,13 +172,6 @@ app.post("/create-billing-request-flow", async (req, res) => {
         },
       }
     );
-
-    // Log the full response to check the structure
-    console.log(
-      "Billing request flow response:",
-      billingRequestFlowResponse.data
-    );
-
     res.status(201).json(billingRequestFlowResponse.data);
   } catch (error) {
     console.error(
@@ -365,5 +183,4 @@ app.post("/create-billing-request-flow", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
-
 export default app;
