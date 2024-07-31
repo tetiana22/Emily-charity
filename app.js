@@ -14,9 +14,9 @@ app.use(
 );
 
 const PAYPAL_CLIENT_ID =
-  "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
+  "AQygPQru6JBbNdU7Oi2-0HtfXRF4FSR213YZBrtRLRRoQGpQLrJobs564mezYiHnLojl2QUsRY5KsMIh";
 const PAYPAL_CLIENT_SECRET =
-  "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
+  "EHJUnRJZYpg6ZQhZ_zfclwjyBLyG0YqHaI3TQ9W6up9NxjVwzf6hL_DRHJzytjVLmDPPJLGy_xLwFgz2";
 const PAYPAL_API_URL = "https://api-m.sandbox.paypal.com";
 
 async function getPayPalAccessToken() {
@@ -34,11 +34,20 @@ async function getPayPalAccessToken() {
   );
   return response.data.access_token;
 }
-
-// PayPal create order endpoint
 app.post("/create-paypal-order", async (req, res) => {
   try {
     const { amount, currency = "USD" } = req.body;
+
+    console.log("Received amount:", amount); // Логування значення amount
+
+    // Перевірка формату значення amount
+    const amountValue = parseFloat(amount.value);
+    if (isNaN(amountValue) || amountValue <= 0) {
+      return res.status(400).json({ error: "Invalid amount value" });
+    }
+
+    const formattedAmount = amountValue.toFixed(2);
+
     const accessToken = await getPayPalAccessToken();
 
     const orderResponse = await axios.post(
@@ -49,7 +58,7 @@ app.post("/create-paypal-order", async (req, res) => {
           {
             amount: {
               currency_code: currency,
-              value: amount,
+              value: formattedAmount,
             },
           },
         ],
@@ -61,38 +70,11 @@ app.post("/create-paypal-order", async (req, res) => {
         },
       }
     );
+
     res.status(201).json(orderResponse.data);
   } catch (error) {
     console.error(
       "Error creating PayPal order:",
-      error.response ? error.response.data : error.message
-    );
-    res
-      .status(error.response ? error.response.status : 500)
-      .json({ error: error.response ? error.response.data : error.message });
-  }
-});
-
-// PayPal capture order endpoint
-app.post("/capture-paypal-order", async (req, res) => {
-  try {
-    const { orderID } = req.body;
-    const accessToken = await getPayPalAccessToken();
-
-    const captureResponse = await axios.post(
-      `${PAYPAL_API_URL}/v2/checkout/orders/${orderID}/capture`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    res.status(201).json(captureResponse.data);
-  } catch (error) {
-    console.error(
-      "Error capturing PayPal order:",
       error.response ? error.response.data : error.message
     );
     res
