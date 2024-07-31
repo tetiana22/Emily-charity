@@ -17,73 +17,54 @@ const PAYPAL_CLIENT_ID =
   "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
 const PAYPAL_CLIENT_SECRET =
   "Ad1v6KDtCeyrLmHGIPU1kdlPabxyyM80DFHI54V6xT4Tgt7QpT6HEivRDiurQgyASH0qB6STVLdKPVKw";
-const PAYPAL_API_URL = "https://api-m.sandbox.paypal.com/v1/oauth2/token";
+const PAYPAL_API_URL = "https://api-m.sandbox.paypal.com";
 
-const generatePayPalToken = async (req, res, next) => {
-  try {
-    const auth = Buffer.from(
-      `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
-    ).toString("base64");
-
-    const response = await axios({
-      url: `${PAYPAL_API_URL}/v1/oauth2/token`,
-      method: "post",
+async function getPayPalAccessToken() {
+  const response = await axios.post(
+    `${PAYPAL_API_URL}/v1/oauth2/token`,
+    "grant_type=client_credentials",
+    {
       headers: {
+        Authorization: `Basic ${Buffer.from(
+          `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+        ).toString("base64")}`,
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${auth}`,
       },
-      data: "grant_type=client_credentials",
-    });
+    }
+  );
+  return response.data.access_token;
+}
 
-    req.paypalToken = response.data.access_token;
-    next();
-  } catch (error) {
-    console.error(
-      "Error generating PayPal token:",
-      error.response ? error.response.data : error.message
-    );
-    res.status(500).json({ error: "Error generating PayPal token" });
-  }
-};
-
-app.post("/create-payment", generatePayPalToken, async (req, res) => {
-  const { amount } = req.body;
-
+// PayPal create order endpoint
+app.post("/create-paypal-order", async (req, res) => {
   try {
-    const paymentData = {
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value: amount,
-          },
-        },
-      ],
-      application_context: {
-        brand_name: "Your Brand",
-        landing_page: "NO_PREFERENCE",
-        user_action: "PAY_NOW",
-        return_url: "http://localhost:3000/success",
-        cancel_url: "http://localhost:3000/cancel",
-      },
-    };
+    const { amount, currency = "USD" } = req.body;
+    const accessToken = await getPayPalAccessToken();
 
-    const response = await axios.post(
+    const orderResponse = await axios.post(
       `${PAYPAL_API_URL}/v2/checkout/orders`,
-      paymentData,
+      {
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            amount: {
+              currency_code: currency,
+              value: amount,
+            },
+          },
+        ],
+      },
       {
         headers: {
-          Authorization: `Bearer ${req.paypalToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }
     );
-
-    res.status(201).json(response.data);
+    res.status(201).json(orderResponse.data);
   } catch (error) {
     console.error(
-      "Error creating PayPal payment:",
+      "Error creating PayPal order:",
       error.response ? error.response.data : error.message
     );
     res
@@ -92,25 +73,26 @@ app.post("/create-payment", generatePayPalToken, async (req, res) => {
   }
 });
 
-app.post("/execute-payment", generatePayPalToken, async (req, res) => {
-  const { paymentID, payerID } = req.body;
-
+// PayPal capture order endpoint
+app.post("/capture-paypal-order", async (req, res) => {
   try {
-    const response = await axios.post(
-      `${PAYPAL_API_URL}/v2/checkout/orders/${paymentID}/capture`,
+    const { orderID } = req.body;
+    const accessToken = await getPayPalAccessToken();
+
+    const captureResponse = await axios.post(
+      `${PAYPAL_API_URL}/v2/checkout/orders/${orderID}/capture`,
       {},
       {
         headers: {
-          Authorization: `Bearer ${req.paypalToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }
     );
-
-    res.status(200).json(response.data);
+    res.status(201).json(captureResponse.data);
   } catch (error) {
     console.error(
-      "Error executing PayPal payment:",
+      "Error capturing PayPal order:",
       error.response ? error.response.data : error.message
     );
     res
@@ -118,7 +100,6 @@ app.post("/execute-payment", generatePayPalToken, async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
-
 // GoCardless Integration (left unchanged)
 const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
 const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
