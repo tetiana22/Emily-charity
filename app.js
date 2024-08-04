@@ -8,6 +8,7 @@ app.use(bodyParser.json());
 app.use(
   cors({
     origin: "http://localhost:3000",
+    origin: "http://localhost:5175",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
