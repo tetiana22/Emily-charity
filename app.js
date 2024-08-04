@@ -11,7 +11,7 @@ const app = express();
 app.use(express.static(path.join(__dirname, "src")));
 
 app.get("/donation.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "/partials/donation.html"));
+  res.sendFile(path.join(__dirname, "src/partials/donation.html"));
 });
 app.use(bodyParser.json());
 app.use(
