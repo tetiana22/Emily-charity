@@ -2,10 +2,11 @@ import express from "express";
 import bodyParser from "body-parser";
 import axios from "axios";
 import cors from "cors";
-import path from "path"; // Імпортуємо path
+import path from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const app = express();
 
 app.use(express.static(path.join(__dirname, "dist")));
@@ -195,4 +196,5 @@ app.post("/create-billing-request-flow", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
+
 export default app;
