@@ -66,8 +66,8 @@ app.use((req, res, next) => {
   next();
 });
 // Health-check ендпоінт
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK" });
+app.get("/", (req, res) => {
+  res.send("Welcome to the Emily Charity API!");
 });
 // Роут для створення PayPal замовлення
 app.post("/create-paypal-order", async (req, res) => {
