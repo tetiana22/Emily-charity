@@ -1,15 +1,15 @@
 import axios from "axios";
-
+import dotenv from "dotenv";
+dotenv.config();
 // Конфігурація PayPal
-const PAYPAL_CLIENT_ID =
-  "AQygPQru6JBbNdU7Oi2-0HtfXRF4FSR213YZBrtRLRRoQGpQLrJobs564mezYiHnLojl2QUsRY5KsMIh";
-const PAYPAL_CLIENT_SECRET =
-  "EHJUnRJZYpg6ZQhZ_zfclwjyBLyG0YqHaI3TQ9W6up9NxjVwzf6hL_DRHJzytjVLmDPPJLGy_xLwFgz2";
-const PAYPAL_API_URL = "https://api-m.sandbox.paypal.com";
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+const PAYPAL_API_URL = process.env.PAYPAL_API_URL;
+
 // Конфігурація GoCardless
-const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com";
-const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
-const GC_VERSION = "2015-07-06";
+const GO_CARDLESS_API_URL = process.env.GO_CARDLESS_API_URL;
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const GC_VERSION = process.env.GC_VERSION;
 
 // Кешування токенів
 let cachedPayPalToken = null;
@@ -184,3 +184,5 @@ export async function createGoCardlessBillingRequestFlow(req, res) {
       .json({ error: error.response ? error.response.data : error.message });
   }
 }
+console.log("PAYPAL_CLIENT_ID:", process.env.PAYPAL_CLIENT_ID);
+console.log(process.env);
