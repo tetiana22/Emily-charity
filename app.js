@@ -4,12 +4,13 @@ import axios from "axios";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-// Створення __dirname для ES-модулів
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Статичні файли
 app.use(express.static(path.join(__dirname, "dist")));
 app.use(bodyParser.json());
 app.use(
@@ -28,7 +29,22 @@ const PAYPAL_CLIENT_ID =
 const PAYPAL_CLIENT_SECRET =
   "EHJUnRJZYpg6ZQhZ_zfclwjyBLyG0YqHaI3TQ9W6up9NxjVwzf6hL_DRHJzytjVLmDPPJLGy_xLwFgz2";
 const PAYPAL_API_URL = "https://api-m.sandbox.paypal.com";
+
+// Конфігурація GoCardless
+const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com";
+const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
+const GC_VERSION = "2015-07-06";
+
+// Кешування токенів
+let cachedPayPalToken = null;
+let tokenExpirationTime = null;
+
 async function getPayPalAccessToken() {
+  const now = Date.now();
+  if (cachedPayPalToken && tokenExpirationTime && now < tokenExpirationTime) {
+    return cachedPayPalToken;
+  }
+
   const response = await axios.post(
     `${PAYPAL_API_URL}/v1/oauth2/token`,
     "grant_type=client_credentials",
@@ -41,11 +57,30 @@ async function getPayPalAccessToken() {
       },
     }
   );
-  return response.data.access_token;
+
+  cachedPayPalToken = response.data.access_token;
+  tokenExpirationTime = now + response.data.expires_in * 1000;
+
+  return cachedPayPalToken;
 }
-app.get("/", (req, res) => {
-  res.send("Welcome to the Emily Charity API!");
+
+// Логування часу виконання запитів
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    console.log(
+      `${req.method} ${req.originalUrl} [${res.statusCode}] - ${duration}ms`
+    );
+  });
+  next();
 });
+// Health-check ендпоінт
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+
+// Роут для створення PayPal замовлення
 app.post("/create-paypal-order", async (req, res) => {
   try {
     const { amount, currency = "USD" } = req.body;
@@ -86,9 +121,8 @@ app.post("/create-paypal-order", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
-const GO_CARDLESS_API_URL = "https://api-sandbox.gocardless.com"; // Sandbox API URL
-const ACCESS_TOKEN = "sandbox_QbpEJylc3XRJ4iE8qe1axWfIGQ4k_H_bxfs3lkQt";
-const GC_VERSION = "2015-07-06";
+
+// Роут для створення GoCardless billing request
 app.post("/create-billing-request", async (req, res) => {
   try {
     const {
@@ -159,6 +193,8 @@ app.post("/create-billing-request", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
+
+// Роут для створення GoCardless billing request flow
 app.post("/create-billing-request-flow", async (req, res) => {
   try {
     const { billingRequestId } = req.body;
@@ -191,4 +227,5 @@ app.post("/create-billing-request-flow", async (req, res) => {
       .json({ error: error.response ? error.response.data : error.message });
   }
 });
+
 export default app;
