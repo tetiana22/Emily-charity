@@ -1,12 +1,11 @@
 import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
-// Конфігурація PayPal
+
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 const PAYPAL_API_URL = process.env.PAYPAL_API_URL;
 
-// Конфігурація GoCardless
 const GO_CARDLESS_API_URL = process.env.GO_CARDLESS_API_URL;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const GC_VERSION = process.env.GC_VERSION;
@@ -184,5 +183,3 @@ export async function createGoCardlessBillingRequestFlow(req, res) {
       .json({ error: error.response ? error.response.data : error.message });
   }
 }
-console.log("PAYPAL_CLIENT_ID:", process.env.PAYPAL_CLIENT_ID);
-console.log(process.env);
