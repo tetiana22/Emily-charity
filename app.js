@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(express.static(path.join(__dirname, "dist")));
 app.use(bodyParser.json());
@@ -66,8 +67,8 @@ app.use((req, res, next) => {
   next();
 });
 // Health-check ендпоінт
-app.get("/", (req, res) => {
-  res.send("Welcome to the Emily Charity API!");
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
 });
 // Роут для створення PayPal замовлення
 app.post("/create-paypal-order", async (req, res) => {
