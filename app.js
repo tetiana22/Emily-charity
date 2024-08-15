@@ -46,7 +46,6 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
-// Використання роутів для платежів
 app.use("/api/payments", paymentRouter);
 
 export default app;
