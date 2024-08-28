@@ -6,6 +6,7 @@ const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 const PAYPAL_API_URL = process.env.PAYPAL_API_URL;
 
+//gocardless
 const GO_CARDLESS_API_URL = process.env.GO_CARDLESS_API_URL;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const GC_VERSION = process.env.GC_VERSION;
