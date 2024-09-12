@@ -19,6 +19,9 @@ const validateRequest = (schema) => (req, res, next) => {
 };
 
 const router = Router();
+router.get("/ping", (req, res) => {
+  res.status(200).send("Pong");
+});
 
 router.post(
   "/create-paypal-order",
