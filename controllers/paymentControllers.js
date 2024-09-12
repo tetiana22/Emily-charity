@@ -1,44 +1,85 @@
 import axios from "axios";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-const PAYPAL_API_URL = process.env.PAYPAL_API_URL;
+const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_API_URL } = process.env;
 
-//gocardless
-const GO_CARDLESS_API_URL = process.env.GO_CARDLESS_API_URL;
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const GC_VERSION = process.env.GC_VERSION;
-
-// Кешування токенів
 let cachedPayPalToken = null;
 let tokenExpirationTime = null;
 
+// Отримання PayPal токену з кешуванням
 async function getPayPalAccessToken() {
   const now = Date.now();
   if (cachedPayPalToken && tokenExpirationTime && now < tokenExpirationTime) {
     return cachedPayPalToken;
   }
 
-  const response = await axios.post(
-    `${PAYPAL_API_URL}/v1/oauth2/token`,
-    "grant_type=client_credentials",
-    {
-      headers: {
-        Authorization: `Basic ${Buffer.from(
-          `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
-        ).toString("base64")}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    }
-  );
+  try {
+    const response = await axios.post(
+      `${PAYPAL_API_URL}/v1/oauth2/token`,
+      "grant_type=client_credentials",
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+          ).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-  cachedPayPalToken = response.data.access_token;
-  tokenExpirationTime = now + response.data.expires_in * 1000;
+    cachedPayPalToken = response.data.access_token;
+    tokenExpirationTime = now + response.data.expires_in * 1000;
 
-  return cachedPayPalToken;
+    return cachedPayPalToken;
+  } catch (error) {
+    console.error("Error fetching PayPal access token:", error);
+    throw new Error("Failed to obtain PayPal token");
+  }
 }
+
+// import axios from "axios";
+// import dotenv from "dotenv";
+// dotenv.config();
+
+// const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+// const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+// const PAYPAL_API_URL = process.env.PAYPAL_API_URL;
+
+// //gocardless
+// const GO_CARDLESS_API_URL = process.env.GO_CARDLESS_API_URL;
+// const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+// const GC_VERSION = process.env.GC_VERSION;
+
+// // Кешування токенів
+// let cachedPayPalToken = null;
+// let tokenExpirationTime = null;
+
+// async function getPayPalAccessToken() {
+//   const now = Date.now();
+//   if (cachedPayPalToken && tokenExpirationTime && now < tokenExpirationTime) {
+//     return cachedPayPalToken;
+//   }
+
+//   const response = await axios.post(
+//     `${PAYPAL_API_URL}/v1/oauth2/token`,
+//     "grant_type=client_credentials",
+//     {
+//       headers: {
+//         Authorization: `Basic ${Buffer.from(
+//           `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+//         ).toString("base64")}`,
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//     }
+//   );
+
+//   cachedPayPalToken = response.data.access_token;
+//   tokenExpirationTime = now + response.data.expires_in * 1000;
+
+//   return cachedPayPalToken;
+// }
 
 export async function createPayPalOrder(req, res) {
   try {
